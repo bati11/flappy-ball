@@ -1,10 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title></title>
+<meta charset="UTF-8">
+<title></title>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script>
+<style>
+#c {
+   border: 1px solid black;
+}
+</style>
 </head>
 <body>
 <h1>Flappy Ball</h1>
+<div>
+  <canvas id="c"></canvas>
+</div>
+<input type="button" onclick="game_start()" value="START!"/>
+<script>
+var start_flag      = false,
+    flap_flag       = false,
+    drop_flag       = false,
+    canvas          = new fabric.Canvas('c'),
+    canvas_height   = 300,
+    canvas_width    = 500,
+    floor           = canvas_height,
+    roof            = 0,
+    ball_x_position = 100,
+    ball_height     = 10,
+    ball_width      = 10,
+    ball            = new fabric.Circle({
+      left: 100,
+      top:  canvas_height / 2 - ball_height,
+      fill: 'red',
+      radius: ball_width
+    }),
+    fall = function(){
+      ball.set('top', ball.get('top') + 3);
+      canvas.renderAll();
+    },
+    flap = function(){
+      flap_flag = true;
+      ball.animate('top', '-=80', {
+        onChange: canvas.renderAll.bind(canvas),
+        duration: 150,
+        onComplete: function(){
+          flap_flag = false;
+        }
+      });
+    },
+    game_start = function(){
+      setInterval(function(){
+        if (!flap_flag) fall();
+      }, 10);
+    }
+    ;
+
+canvas.setWidth(canvas_width);
+canvas.setHeight(canvas_height);
+canvas.on('mouse:down', function(options) {
+  if (start_flag) {
+    flap();
+  } else {
+    start_flag = true;
+    game_start();
+  }
+});
+canvas.add(ball);
+</script>
 </body>
 </html>

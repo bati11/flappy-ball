@@ -15,7 +15,6 @@
 <div>
   <canvas id="c"></canvas>
 </div>
-<input type="button" onclick="game_start()" value="START!"/>
 <script>
 var start_flag      = false,
     flap_flag       = false,
@@ -26,26 +25,32 @@ var start_flag      = false,
     floor           = canvas_height,
     roof            = 0,
     ball_radius     = 10,
-    ball            = new fabric.Circle({
-      left: 100,
-      top:  canvas_height / 2 - ball_radius,
-      fill: 'red',
-      radius: ball_radius
-    }),
-    fall = function(){
-      ball.set('top', ball.get('top') + 2);
-      canvas.renderAll();
-    },
-    flap = function(){
-      flap_flag = true;
-      ball.animate('top', '-=50', {
-        onChange: canvas.renderAll.bind(canvas),
-        duration: 150,
-        onComplete: function(){
-          flap_flag = false;
-        }
+    createBall      = function(){
+      var ball = new fabric.Circle({
+        top: canvas_height / 2 - ball_radius,
+        left: 100,
+        fill: 'red',
+        radius: ball_radius
       });
+      ball.fall = function(){
+        ball.set('top', ball.get('top') + 2);
+        ballBottom = ball.get('top') + ball.get('radius');
+        if (ballBottom >= floor) game_over();
+        else canvas.renderAll();
+      };
+      ball.flap = function(){
+        flap_flag = true;
+        ball.animate('top', '-=50', {
+          onChange: canvas.renderAll.bind(canvas),
+          duration: 150,
+          onComplete: function(){
+            flap_flag = false;
+          }
+        });
+      };
+      return ball;
     },
+    ball = createBall(),
     create_block = function(top_position){
       var block = new fabric.Rect({
         left:   canvas_width,
@@ -75,22 +80,31 @@ var start_flag      = false,
       }
     },
     game_start = function(){
-      setInterval(function(){
-        if (!flap_flag) fall();
-      }, 10);
+      start_flag = true;
     },
     game_over = function(){
-      alert('DETH!!');
+      start_flag = false;
+      alert('GAME OVER!!');
+      canvas.clear();
+      gameInitialize();
+    },
+    gameInitialize = function(){
+      ball = createBall();
+      canvas.add(ball);
     }
     ;
 
 canvas.setWidth(canvas_width);
 canvas.setHeight(canvas_height);
+
+gameInitialize();
+setInterval(function(){
+  if (start_flag && !flap_flag) ball.fall();
+}, 10);
 canvas.on('mouse:down', function(options) {
   if (start_flag) {
-    flap();
+    ball.flap();
   } else {
-    start_flag = true;
     game_start();
     blocks = create_block_pair();
     console.log(blocks);
@@ -98,7 +112,6 @@ canvas.on('mouse:down', function(options) {
     canvas.add(blocks.floor_block);
   }
 });
-canvas.add(ball);
 </script>
 </body>
 </html>

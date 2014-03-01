@@ -25,22 +25,20 @@ var start_flag      = false,
     canvas_width    = 500,
     floor           = canvas_height,
     roof            = 0,
-    ball_x_position = 100,
-    ball_height     = 10,
-    ball_width      = 10,
+    ball_radius     = 10,
     ball            = new fabric.Circle({
       left: 100,
-      top:  canvas_height / 2 - ball_height,
+      top:  canvas_height / 2 - ball_radius,
       fill: 'red',
-      radius: ball_width
+      radius: ball_radius
     }),
     fall = function(){
-      ball.set('top', ball.get('top') + 3);
+      ball.set('top', ball.get('top') + 2);
       canvas.renderAll();
     },
     flap = function(){
       flap_flag = true;
-      ball.animate('top', '-=80', {
+      ball.animate('top', '-=50', {
         onChange: canvas.renderAll.bind(canvas),
         duration: 150,
         onComplete: function(){
@@ -48,10 +46,41 @@ var start_flag      = false,
         }
       });
     },
+    create_block = function(top_position){
+      var block = new fabric.Rect({
+        left:   canvas_width,
+        top:    top_position,
+        fill:   'blue',
+        width:  50,
+        height: 100
+      })
+      block.on('added', function(){
+        var that = this;
+        that.animate('left', -that.width, {
+          duration: 4000,
+          onChange: canvas.renderAll.bind(canvas),
+          onComplete: function(){
+            that.remove();
+          }
+        });
+      });
+      return block;
+    },
+    create_block_pair = function(){
+      roof_block = create_block(0);
+      floor_block = create_block(200);
+      return {
+        roof_block: roof_block,
+        floor_block: floor_block
+      }
+    },
     game_start = function(){
       setInterval(function(){
         if (!flap_flag) fall();
       }, 10);
+    },
+    game_over = function(){
+      alert('DETH!!');
     }
     ;
 
@@ -63,6 +92,10 @@ canvas.on('mouse:down', function(options) {
   } else {
     start_flag = true;
     game_start();
+    blocks = create_block_pair();
+    console.log(blocks);
+    canvas.add(blocks.roof_block);
+    canvas.add(blocks.floor_block);
   }
 });
 canvas.add(ball);

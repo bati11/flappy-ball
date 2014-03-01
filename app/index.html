@@ -30,18 +30,23 @@ var start_flag      = false,
         top: canvas_height / 2 - ball_radius,
         left: 100,
         fill: 'red',
+        strokeWidth: 0,
         radius: ball_radius
       });
       ball.fall = function(){
-        ball.set('top', ball.get('top') + 2);
+        ball.setTop(ball.get('top') + 2);
         ballBottom = ball.get('top') + ball.get('radius');
+        ball.setCoords();
         if (ballBottom >= floor) game_over();
         else canvas.renderAll();
       };
       ball.flap = function(){
         flap_flag = true;
         ball.animate('top', '-=50', {
-          onChange: canvas.renderAll.bind(canvas),
+          onChange: function(){
+            ball.setCoords();
+            canvas.renderAll();
+          },
           duration: 150,
           onComplete: function(){
             flap_flag = false;
@@ -63,7 +68,14 @@ var start_flag      = false,
         var that = this;
         that.animate('left', -that.width, {
           duration: 4000,
-          onChange: canvas.renderAll.bind(canvas),
+          onChange: function(){
+            that.setCoords();
+            if (that.intersectsWithObject(ball)) {
+              game_over();
+            } else{
+              canvas.renderAll();
+            }
+          },
           onComplete: function(){
             that.remove();
           }

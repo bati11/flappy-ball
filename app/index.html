@@ -78,7 +78,8 @@ var start_flag      = false,
           },
           onComplete: function(){
             that.remove();
-          }
+          },
+          easing: function(t, b, c, d) { return c*t/d + b; }
         });
       });
       return block;

@@ -82,7 +82,8 @@ var start_flag      = false,
           onComplete: function(){
             block.remove();
           },
-          easing: function(t, b, c, d) { return c*t/d + b; }
+          easing: function(t, b, c, d) { return c*t/d + b; },
+          abort: function(){ return !start_flag; }
         });
       });
       blocks.push(block);

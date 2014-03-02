@@ -32,9 +32,9 @@ var startFlag    = false,
     ball         = null,
     blocks       = [],
     createBall   = function(){
-      var ballRadius = 10,
+      var ballRadius = 12,
           ball = new fabric.Circle({
-            top: canvasHeight / 2 - ballRadius,
+            top: canvasHeight / 2 - (3 * ballRadius),
             left: 100,
             fill: 'red',
             strokeWidth: 0,
@@ -111,7 +111,7 @@ var startFlag    = false,
       block.on('added', function(){
         var that = this;
         that.animate('left', -blockWidth, {
-          duration: 5000,
+          duration: 6000,
           onChange: function(){
             that.setCoords();
             if (startFlag && !that.isShow && that.left <= canvasWidth - blockWidth) {

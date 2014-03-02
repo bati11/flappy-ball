@@ -57,6 +57,7 @@ var start_flag      = false,
       return ball;
     },
     ball = createBall(),
+    blocks = [],
     create_block = function(top_position){
       var block = new fabric.Rect({
         left:   canvas_width + 50,
@@ -75,11 +76,8 @@ var start_flag      = false,
               block.isShow = true;
               canvas.add(create_block(top_position));
             }
-            if (block.intersectsWithObject(ball)) {
-              gameOverFlag = true;
-            } else{
-              canvas.renderAll();
-            }
+            if (block.intersectsWithObject(ball)) gameOverFlag = true;
+            else canvas.renderAll();
           },
           onComplete: function(){
             block.remove();
@@ -87,6 +85,7 @@ var start_flag      = false,
           easing: function(t, b, c, d) { return c*t/d + b; }
         });
       });
+      blocks.push(block);
       return block;
     },
     game_start = function(){
@@ -96,6 +95,10 @@ var start_flag      = false,
       start_flag = false;
       alert('GAME OVER!!');
       canvas.clear();
+      ball.remove();
+      for (var i=0,l=blocks.length; i<l; i++) {
+        blocks[i].remove();
+      }
       gameInitialize();
     },
     gameInitialize = function(){

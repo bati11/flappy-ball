@@ -127,7 +127,7 @@ var startFlag    = false,
           },
           onComplete: function(){ that.remove(); },
           easing: function(t, b, c, d) { return c*t/d + b; },
-          abort: function(){ return !startFlag || gameOverFlag; }
+          abort: function(){ return !startFlag; }
         });
       });
       return block;
@@ -148,15 +148,15 @@ var startFlag    = false,
       gameOverFlag = false;
       startFlag = false;
       alert('GAME OVER!!');
+      gameReady();
+    },
+    gameReady = function(){
       canvas.clear();
-      ball.remove();
+      if (ball) ball.remove();
       for (var i=0,l=blocks.length; i<l; i++) {
         blocks[i].remove();
       }
       passCount = 0;
-      gameReady();
-    },
-    gameReady = function(){
       ball = createBall();
       canvas.add(ball);
     }

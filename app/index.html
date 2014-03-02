@@ -135,7 +135,7 @@ var startFlag    = false,
             if (that.intersectsWithObject(ball)) gameOverFlag = true;
             else canvas.renderAll();
           },
-          onComplete: function(){ that.remove(); },
+          onComplete: function(){ if (that.left + that.width < 0) that.remove(); },
           easing: linear,
           abort: function(){ return !startFlag; }
         });
@@ -157,8 +157,21 @@ var startFlag    = false,
     gameOver = function(){
       gameOverFlag = false;
       startFlag = false;
-      alert('GAME OVER!!');
-      gameReady();
+      canvas.setBackgroundColor('#000', function(){
+        canvas.renderAll();
+        ball.bringToFront();
+        ball.animate('top', floor, {
+          onChange: function(){
+            canvas.renderAll();
+          },
+          onComplete: function(){
+            canvas.setBackgroundColor('#fff', canvas.renderAll.bind(canvas));
+            alert('GAME OVER!!');
+            gameReady();
+          }
+        });
+      });
+      ball.animate('angle', 80, {onChange: canvas.renderAll.bind(canvas)});
     },
     gameReady = function(){
       canvas.clear();

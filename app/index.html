@@ -17,6 +17,7 @@
 </div>
 <script>
 var start_flag      = false,
+    gameOverFlag    = false,
     flap_flag       = false,
     drop_flag       = false,
     canvas          = new fabric.Canvas('c'),
@@ -37,7 +38,7 @@ var start_flag      = false,
         ball.setTop(ball.get('top') + 2);
         ballBottom = ball.get('top') + ball.get('radius');
         ball.setCoords();
-        if (ballBottom >= floor) game_over();
+        if (ballBottom >= floor) gameOverFlag = true;
         else canvas.renderAll();
       };
       ball.flap = function(){
@@ -58,38 +59,35 @@ var start_flag      = false,
     ball = createBall(),
     create_block = function(top_position){
       var block = new fabric.Rect({
-        left:   canvas_width,
+        left:   canvas_width + 50,
         top:    top_position,
         fill:   'blue',
         width:  50,
         height: 100
       })
+      block.isShow = false;
       block.on('added', function(){
-        var that = this;
-        that.animate('left', -that.width, {
+        block.animate('left', -block.width, {
           duration: 4000,
           onChange: function(){
-            that.setCoords();
-            if (that.intersectsWithObject(ball)) {
-              game_over();
+            block.setCoords();
+            if (start_flag && !block.isShow && block.left <= canvas_width - 100) {
+              block.isShow = true;
+              canvas.add(create_block(top_position));
+            }
+            if (block.intersectsWithObject(ball)) {
+              gameOverFlag = true;
             } else{
               canvas.renderAll();
             }
           },
           onComplete: function(){
-            that.remove();
-          }
+            block.remove();
+          },
+          easing: function(t, b, c, d) { return c*t/d + b; }
         });
       });
       return block;
-    },
-    create_block_pair = function(){
-      roof_block = create_block(0);
-      floor_block = create_block(200);
-      return {
-        roof_block: roof_block,
-        floor_block: floor_block
-      }
     },
     game_start = function(){
       start_flag = true;
@@ -112,16 +110,20 @@ canvas.setHeight(canvas_height);
 gameInitialize();
 setInterval(function(){
   if (start_flag && !flap_flag) ball.fall();
+  if (gameOverFlag) {
+    gameOverFlag = false;
+    game_over();
+    }
 }, 10);
 canvas.on('mouse:down', function(options) {
   if (start_flag) {
     ball.flap();
   } else {
     game_start();
-    blocks = create_block_pair();
-    console.log(blocks);
-    canvas.add(blocks.roof_block);
-    canvas.add(blocks.floor_block);
+    var roof_block = create_block(0);
+    var floor_block = create_block(200);
+    canvas.add(roof_block);
+    canvas.add(floor_block);
   }
 });
 </script>

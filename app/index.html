@@ -33,13 +33,13 @@ var startFlag    = false,
     linear       = function(t, b, c, d) { return c*t/d + b; },
     blocks       = [],
     createBall   = function(){
-      var ballRadius = 12,
+      var ballRadius = 10,
           ball = new fabric.Ellipse({
             top: canvasHeight / 2 - (3 * ballRadius),
             left: 100,
             fill: 'red',
             strokeWidth: 0,
-            rx: 20,
+            rx: 15,
             ry: ballRadius
           });
       ball.flapFlag = false;
@@ -51,7 +51,7 @@ var startFlag    = false,
 
         that.fallFlag = true;
         that.animate('top', floor, {
-          duration: 600,
+          duration: 700,
           onChange: function(){
             that.setCoords();
             ballBottom = that.get('top') + that.get('ry');
@@ -59,7 +59,7 @@ var startFlag    = false,
             else canvas.renderAll();
           },
           onComplete: function(){ that.fallFlag = false; },
-          easing: fabric.util.easeInSine,
+          easing: fabric.util.easeInExpo,
           abort: function(){
             return that.flapFlag || !startFlag || gameOverFlag;
           }
@@ -107,7 +107,7 @@ var startFlag    = false,
       };
     },
     createBlock = function(top_position, height, isCall){
-      var blockWidth = 100,
+      var blockWidth = 80,
           block = new fabric.Rect({
             left:       canvasWidth + 200,
             top:        top_position,

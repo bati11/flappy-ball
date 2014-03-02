@@ -30,15 +30,17 @@ var startFlag    = false,
     floor        = canvasHeight,
     roof         = 0,
     ball         = null,
+    linear       = function(t, b, c, d) { return c*t/d + b; },
     blocks       = [],
     createBall   = function(){
       var ballRadius = 12,
-          ball = new fabric.Circle({
+          ball = new fabric.Ellipse({
             top: canvasHeight / 2 - (3 * ballRadius),
             left: 100,
             fill: 'red',
             strokeWidth: 0,
-            radius: ballRadius
+            rx: 20,
+            ry: ballRadius
           });
       ball.flapFlag = false;
       ball.fallFlag = false;
@@ -52,7 +54,7 @@ var startFlag    = false,
           duration: 600,
           onChange: function(){
             that.setCoords();
-            ballBottom = that.get('top') + that.get('radius');
+            ballBottom = that.get('top') + that.get('ry');
             if (ballBottom >= floor) gameOverFlag = true;
             else canvas.renderAll();
           },
@@ -62,11 +64,19 @@ var startFlag    = false,
             return that.flapFlag || !startFlag || gameOverFlag;
           }
         });
+        that.animate('angle', 70, {
+          onChange: canvas.renderAll.bind(canvas),
+          easing: fabric.util.easeInQunit,
+          abort: function(){
+            return that.flapFlag || !startFlag || gameOverFlag;
+          }
+        });
       };
       ball.flap = function(){
         var that = this,
             flapValue = canvasHeight / 30 * 4;
         that.flapFlag = true;
+        that.set('angle', 0);
         that.animate('top', '-=' + flapValue, {
           duration: 200,
           onChange: function(){
@@ -76,7 +86,7 @@ var startFlag    = false,
           onComplete: function(){
             that.flapFlag = false;
           },
-          easing: fabric.util.easeOutBack
+          easing: linear
         });
       };
       return ball;
@@ -126,7 +136,7 @@ var startFlag    = false,
             else canvas.renderAll();
           },
           onComplete: function(){ that.remove(); },
-          easing: function(t, b, c, d) { return c*t/d + b; },
+          easing: linear,
           abort: function(){ return !startFlag; }
         });
       });

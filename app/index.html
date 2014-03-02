@@ -8,16 +8,22 @@
 #c {
    border: 1px solid black;
 }
+#count {
+  font-weight: bold;
+  margin-left: 2em;
+}
 </style>
 </head>
 <body>
 <h1>Flappy Ball</h1>
+<p id="count">0</p>
 <div>
   <canvas id="c"></canvas>
 </div>
 <script>
 var startFlag    = false,
     gameOverFlag = false,
+    passCount    = 0,
     canvas       = new fabric.Canvas('c'),
     canvasHeight = 300,
     canvasWidth  = 600,
@@ -100,6 +106,7 @@ var startFlag    = false,
             height: height
           });
       block.isShow = false;
+      block.isPassed = false;
       block.on('added', function(){
         var that = this;
         that.animate('left', -blockWidth, {
@@ -108,12 +115,11 @@ var startFlag    = false,
             that.setCoords();
             if (startFlag && !that.isShow && that.left <= canvasWidth - blockWidth) {
               that.isShow = true;
-              if (isCall) {
-                //var newBlock = createBlock(top_position);
-                //canvas.add(newBlock);
-                //blocks.push(newBlock);
-                createBlockPair();
-              }
+              if (isCall) createBlockPair();
+            }
+            if (!block.isPassed && (that.left + that.width) <= ball.left) {
+              block.isPassed = true;
+              if (isCall) passCount++;
             }
             if (that.intersectsWithObject(ball)) gameOverFlag = true;
             else canvas.renderAll();
@@ -146,6 +152,7 @@ var startFlag    = false,
       for (var i=0,l=blocks.length; i<l; i++) {
         blocks[i].remove();
       }
+      passCount = 0;
       gameReady();
     },
     gameReady = function(){
@@ -166,10 +173,14 @@ canvas.on('mouse:down', function(options) {
 });
 
 setInterval(function(){
-  if (startFlag) ball.fall();
+  if (startFlag) {
+    ball.fall();
+    document.getElementById('count').firstChild.nodeValue= passCount;
+  }
   if (gameOverFlag) {
     gameOverFlag = false;
     gameOver();
+    document.getElementById('count').firstChild.nodeValue= passCount;
   }
 }, 10);
 

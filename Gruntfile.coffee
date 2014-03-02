@@ -5,7 +5,7 @@ module.exports = (grunt) ->
         options:
           port: 9000
           base: 'app'
-          hostname: 'localhost'
+          hostname: '*'
 
     watch:
       livereload:

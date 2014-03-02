@@ -99,11 +99,12 @@ var startFlag    = false,
     createBlock = function(top_position, height, isCall){
       var blockWidth = 100,
           block = new fabric.Rect({
-            left:   canvasWidth + 200,
-            top:    top_position,
-            fill:   'blue',
-            width:  blockWidth,
-            height: height
+            left:       canvasWidth + 200,
+            top:        top_position,
+            fill:       'blue',
+            width:      blockWidth,
+            height:     height,
+            selectable: false
           });
       block.isShow = false;
       block.isPassed = false;

@@ -76,6 +76,7 @@ var state        = null,
         });
       };
       ball.flap = function(){
+        if (this.flapFlag) return;
         var that = this,
             flapValue = canvasHeight / 30 * 4;
         that.flapFlag = true;

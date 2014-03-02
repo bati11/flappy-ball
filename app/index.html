@@ -21,8 +21,7 @@
   <canvas id="c"></canvas>
 </div>
 <script>
-var startFlag    = false,
-    gameOverFlag = false,
+var state        = null,
     passCount    = 0,
     canvas       = new fabric.Canvas('c'),
     canvasHeight = 300,
@@ -55,20 +54,22 @@ var startFlag    = false,
           onChange: function(){
             that.setCoords();
             ballBottom = that.get('top') + that.get('ry');
-            if (ballBottom >= floor) gameOverFlag = true;
+            if (ballBottom >= floor) {
+              state = 'playEnd';
+            }
             else canvas.renderAll();
           },
           onComplete: function(){ that.fallFlag = false; },
           easing: fabric.util.easeInExpo,
           abort: function(){
-            return that.flapFlag || !startFlag || gameOverFlag;
+            return that.flapFlag || state !== 'play';
           }
         });
         that.animate('angle', 70, {
           onChange: canvas.renderAll.bind(canvas),
           easing: fabric.util.easeInQunit,
           abort: function(){
-            return that.flapFlag || !startFlag || gameOverFlag;
+            return that.flapFlag || state !== 'play';
           }
         });
       };
@@ -124,7 +125,7 @@ var startFlag    = false,
           duration: 6000,
           onChange: function(){
             that.setCoords();
-            if (startFlag && !that.isShow && that.left <= canvasWidth - blockWidth) {
+            if (state === 'play' && !that.isShow && that.left <= canvasWidth - blockWidth) {
               that.isShow = true;
               if (isCall) createBlockPair();
             }
@@ -132,12 +133,14 @@ var startFlag    = false,
               block.isPassed = true;
               if (isCall) passCount++;
             }
-            if (that.intersectsWithObject(ball)) gameOverFlag = true;
+            if (that.intersectsWithObject(ball)) {
+              state = 'playEnd';
+            }
             else canvas.renderAll();
           },
           onComplete: function(){ if (that.left + that.width < 0) that.remove(); },
           easing: linear,
-          abort: function(){ return !startFlag; }
+          abort: function(){ return state !== 'play'; }
         });
       });
       return block;
@@ -152,11 +155,10 @@ var startFlag    = false,
       canvas.add(floorBlock);
     }
     gameStart = function(){
-      startFlag = true;
+      state = 'play';
     },
     gameOver = function(){
-      gameOverFlag = false;
-      startFlag = false;
+      state = 'gameover';
       canvas.setBackgroundColor('#000', function(){
         canvas.renderAll();
         ball.bringToFront();
@@ -167,19 +169,21 @@ var startFlag    = false,
           onComplete: function(){
             canvas.setBackgroundColor('#fff', canvas.renderAll.bind(canvas));
             alert('GAME OVER!!');
-            gameReady();
+            state = 'gameoverEnd'
           }
         });
       });
       ball.animate('angle', 80, {onChange: canvas.renderAll.bind(canvas)});
     },
     gameReady = function(){
+      state = 'ready';
       canvas.clear();
       if (ball) ball.remove();
       for (var i=0,l=blocks.length; i<l; i++) {
         blocks[i].remove();
       }
       passCount = 0;
+      state = 'readyEnd';
       ball = createBall();
       canvas.add(ball);
     }
@@ -188,24 +192,23 @@ var startFlag    = false,
 canvas.setWidth(canvasWidth);
 canvas.setHeight(canvasHeight);
 canvas.on('mouse:down', function(options) {
-  if (startFlag) {
-    ball.flap();
-  } else {
+  if (state === 'readyEnd') {
     gameStart();
     createBlockPair();
+  } else if (state === 'play') {
+    ball.flap();
   }
 });
 
 setInterval(function(){
-  if (startFlag) {
+  if (state === 'gameoverEnd') {
+    gameReady();
+  } else if (state === 'play') {
     ball.fall();
-    document.getElementById('count').firstChild.nodeValue= passCount;
-  }
-  if (gameOverFlag) {
-    gameOverFlag = false;
+  } else if (state === 'playEnd') {
     gameOver();
-    document.getElementById('count').firstChild.nodeValue= passCount;
   }
+  document.getElementById('count').firstChild.nodeValue = passCount;
 }, 10);
 
 gameReady();

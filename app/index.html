@@ -18,6 +18,7 @@
 <script>
 var start_flag      = false,
     gameOverFlag    = false,
+    fall_flag       = false,
     flap_flag       = false,
     drop_flag       = false,
     canvas          = new fabric.Canvas('c'),
@@ -35,23 +36,42 @@ var start_flag      = false,
         radius: ball_radius
       });
       ball.fall = function(){
-        ball.setTop(ball.get('top') + 2);
-        ballBottom = ball.get('top') + ball.get('radius');
-        ball.setCoords();
-        if (ballBottom >= floor) gameOverFlag = true;
-        else canvas.renderAll();
+        //ball.setTop(ball.get('top') + 2);
+        //ballBottom = ball.get('top') + ball.get('radius');
+        //ball.setCoords();
+        //if (ballBottom >= floor) gameOverFlag = true;
+        //else canvas.renderAll();
+        if (!fall_flag) {
+          console.log('AAA');
+          fall_flag = true;
+          ball.animate('top', floor, {
+            duration: 700,
+            onChange: function(){
+              ball.setCoords();
+              ballBottom = ball.get('top') + ball.get('radius');
+              if (ballBottom >= floor) gameOverFlag = true;
+              else canvas.renderAll();
+            },
+            onComplete: function(){ fall_flag = false; },
+            easing: fabric.util.easeInSine,
+            abort: function(){
+              return flap_flag || !start_flag || gameOverFlag;
+            }
+          });
+        }
       };
       ball.flap = function(){
         flap_flag = true;
-        ball.animate('top', '-=50', {
+        ball.animate('top', '-=30', {
           onChange: function(){
             ball.setCoords();
             canvas.renderAll();
           },
-          duration: 150,
+          duration: 200,
           onComplete: function(){
             flap_flag = false;
-          }
+          },
+          easing: fabric.util.easeOutQunit
         });
       };
       return ball;

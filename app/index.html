@@ -19,7 +19,7 @@
 var startFlag    = false,
     gameOverFlag = false,
     canvas       = new fabric.Canvas('c'),
-    canvasHeight = 400,
+    canvasHeight = 300,
     canvasWidth  = 600,
     floor        = canvasHeight,
     roof         = 0,
@@ -43,7 +43,7 @@ var startFlag    = false,
 
         that.fallFlag = true;
         that.animate('top', floor, {
-          duration: 700,
+          duration: 600,
           onChange: function(){
             that.setCoords();
             ballBottom = that.get('top') + that.get('radius');
@@ -58,9 +58,10 @@ var startFlag    = false,
         });
       };
       ball.flap = function(){
-        var that = this;
+        var that = this,
+            flapValue = canvasHeight / 30 * 4;
         that.flapFlag = true;
-        that.animate('top', '-=30', {
+        that.animate('top', '-=' + flapValue, {
           duration: 200,
           onChange: function(){
             that.setCoords();
@@ -69,7 +70,7 @@ var startFlag    = false,
           onComplete: function(){
             that.flapFlag = false;
           },
-          easing: fabric.util.easeOutQunit
+          easing: fabric.util.easeOutBack
         });
       };
       return ball;
@@ -90,7 +91,7 @@ var startFlag    = false,
       };
     },
     createBlock = function(top_position, height, isCall){
-      var blockWidth = 50,
+      var blockWidth = 100,
           block = new fabric.Rect({
             left:   canvasWidth + 200,
             top:    top_position,
@@ -102,7 +103,7 @@ var startFlag    = false,
       block.on('added', function(){
         var that = this;
         that.animate('left', -blockWidth, {
-          duration: 4000,
+          duration: 5000,
           onChange: function(){
             that.setCoords();
             if (startFlag && !that.isShow && that.left <= canvasWidth - blockWidth) {

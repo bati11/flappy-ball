@@ -26,11 +26,13 @@ var state        = null,
     canvas       = new fabric.Canvas('c'),
     canvasHeight = 300,
     canvasWidth  = 600,
+    canvasColor  = '#88c6e4',
     floor        = canvasHeight,
     roof         = 0,
     ball         = null,
     linear       = function(t, b, c, d) { return c*t/d + b; },
     blocks       = [],
+    blockColors  = ['#b25424', '#ac613c', '#cc9528', '#7a6334', '#612406'],
     createBall   = function(){
       var ballRadius = 10,
           ball = new fabric.Ellipse({
@@ -107,12 +109,12 @@ var state        = null,
         floorBlockHeight: floorBlockHeight
       };
     },
-    createBlock = function(top_position, height, isCall){
+    createBlock = function(top_position, height, color, isCall){
       var blockWidth = 80,
           block = new fabric.Rect({
             left:       canvasWidth + 200,
             top:        top_position,
-            fill:       'blue',
+            fill:       color,
             width:      blockWidth,
             height:     height,
             selectable: false
@@ -147,8 +149,12 @@ var state        = null,
     },
     createBlockPair = function(){
       var o = calcBlockPosition(),
-          roofBlock  = createBlock(o.roofBlockTop, o.roofBlockHeight, true),
-          floorBlock = createBlock(o.floorBlockTop, o.floorBlockHeight, false);
+          blockColor = (function(){
+            var n = Math.floor(Math.random() * blockColors.length);
+            return blockColors[n];
+          }());
+          roofBlock  = createBlock(o.roofBlockTop, o.roofBlockHeight, blockColor, true),
+          floorBlock = createBlock(o.floorBlockTop, o.floorBlockHeight, blockColor, false);
       blocks.push(roofBlock);
       blocks.push(floorBlock);
       canvas.add(roofBlock);
@@ -167,7 +173,7 @@ var state        = null,
             canvas.renderAll();
           },
           onComplete: function(){
-            canvas.setBackgroundColor('#fff', canvas.renderAll.bind(canvas));
+            canvas.setBackgroundColor(canvasColor, canvas.renderAll.bind(canvas));
             alert('GAME OVER!!');
             state = 'gameoverEnd'
           }
@@ -191,6 +197,7 @@ var state        = null,
 
 canvas.setWidth(canvasWidth);
 canvas.setHeight(canvasHeight);
+canvas.setBackgroundColor(canvasColor, canvas.renderAll.bind(canvas));
 canvas.on('mouse:down', function(options) {
   if (state === 'readyEnd') {
     gameStart();

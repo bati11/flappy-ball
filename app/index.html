@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=620px,user-scalable=no">
 <title></title>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script>
 <style>
@@ -21,7 +22,10 @@
   <canvas id="c"></canvas>
 </div>
 <script>
-var state        = null,
+var isSp = function(){
+      return navigator.userAgent.indexOf('iPhone') > 0 || navigator.userAgent.indexOf('iPad') > 0 || navigator.userAgent.indexOf('iPod') > 0 || navigator.userAgent.indexOf('Android') > 0;
+    },
+    state        = null,
     passCount    = 0,
     canvas       = new fabric.Canvas('c'),
     canvasHeight = 300,
@@ -68,7 +72,6 @@ var state        = null,
           }
         });
         that.animate('angle', 70, {
-          onChange: canvas.renderAll.bind(canvas),
           easing: fabric.util.easeInQunit,
           abort: function(){
             return that.flapFlag || state !== 'play';
@@ -139,7 +142,6 @@ var state        = null,
             if (that.intersectsWithObject(ball)) {
               state = 'playEnd';
             }
-            else canvas.renderAll();
           },
           onComplete: function(){ if (that.left + that.width < 0) that.remove(); },
           easing: linear,
@@ -175,7 +177,7 @@ var state        = null,
           },
           onComplete: function(){
             canvas.setBackgroundColor(canvasColor, canvas.renderAll.bind(canvas));
-            alert('GAME OVER!!');
+            alert('GAME OVER!!!');
             state = 'gameoverEnd'
           }
         });
@@ -200,6 +202,7 @@ canvas.setWidth(canvasWidth);
 canvas.setHeight(canvasHeight);
 canvas.setBackgroundColor(canvasColor, canvas.renderAll.bind(canvas));
 canvas.on('mouse:down', function(options) {
+  if (isSp() && options.e.type !== "touchstart") return;
   if (state === 'readyEnd') {
     gameStart();
     createBlockPair();

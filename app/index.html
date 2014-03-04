@@ -44,7 +44,7 @@ var isSp = function(){
             left: 100,
             fill: 'red',
             strokeWidth: 0,
-            rx: 15,
+            rx: ballRadius+3,
             ry: ballRadius
           });
       ball.flapFlag = false;
@@ -66,13 +66,13 @@ var isSp = function(){
             else canvas.renderAll();
           },
           onComplete: function(){ that.fallFlag = false; },
-          easing: fabric.util.easeInExpo,
+          easing: fabric.util.easeInCirc,
           abort: function(){
             return that.flapFlag || state !== 'play';
           }
         });
-        that.animate('angle', 70, {
-          easing: fabric.util.easeInQunit,
+        that.animate('angle', 60, {
+          easing: fabric.util.easeInCirc,
           abort: function(){
             return that.flapFlag || state !== 'play';
           }
@@ -116,12 +116,13 @@ var isSp = function(){
     createBlock = function(top_position, height, color, isCall){
       var blockWidth = 80,
           block = new fabric.Rect({
-            left:       canvasWidth + 200,
-            top:        top_position,
-            fill:       color,
-            width:      blockWidth,
-            height:     height,
-            selectable: false
+            left:        canvasWidth + 200,
+            top:         top_position,
+            fill:        color,
+            strokeWidth: 0,
+            width:       blockWidth,
+            height:      height,
+            selectable:  false
           });
       block.isShow = false;
       block.isPassed = false;

@@ -22,7 +22,7 @@
   <canvas id="c"></canvas>
 </div>
 <script>
-var isSp = function(){
+var isSmartphone = function(){
       return navigator.userAgent.indexOf('iPhone') > 0 || navigator.userAgent.indexOf('iPad') > 0 || navigator.userAgent.indexOf('iPod') > 0 || navigator.userAgent.indexOf('Android') > 0;
     },
     state        = null,
@@ -50,32 +50,24 @@ var isSp = function(){
       ball.flapFlag = false;
       ball.fallFlag = false;
       ball.fall = function(){
+        if (this.fallFlag) return;
         var that = this;
-
-        if (that.fallFlag) return;
-
         that.fallFlag = true;
         that.animate('top', floor, {
           duration: 700,
           onChange: function(){
             that.setCoords();
             ballBottom = that.get('top') + that.get('ry');
-            if (ballBottom >= floor) {
-              state = 'playEnd';
-            }
-            else canvas.renderAll();
+            if (ballBottom >= floor) state = 'playEnd';
+            else                     canvas.renderAll();
           },
           onComplete: function(){ that.fallFlag = false; },
           easing: fabric.util.easeInCirc,
-          abort: function(){
-            return that.flapFlag || state !== 'play';
-          }
+          abort: function(){ return that.flapFlag || state !== 'play'; }
         });
         that.animate('angle', 60, {
           easing: fabric.util.easeInCirc,
-          abort: function(){
-            return that.flapFlag || state !== 'play';
-          }
+          abort: function(){ return that.flapFlag || state !== 'play'; }
         });
       };
       ball.flap = function(){
@@ -98,22 +90,7 @@ var isSp = function(){
       };
       return ball;
     },
-    calcBlockPosition = function(){
-      var boxHeight          = Math.floor(canvasHeight / 10),
-          floorBlockBoxCount = Math.floor(Math.random() * 6 + 1),
-          floorBlockTop      = (10 - floorBlockBoxCount) * boxHeight,
-          floorBlockHeight   = boxHeight * floorBlockBoxCount,
-          roofBlockBoxCount  = 10 - 3 - floorBlockBoxCount,
-          roofBlockTop       = -10000,
-          roofBlockHeight    = 10000 + boxHeight * roofBlockBoxCount;
-      return {
-        roofBlockTop: roofBlockTop,
-        roofBlockHeight: roofBlockHeight,
-        floorBlockTop: floorBlockTop,
-        floorBlockHeight: floorBlockHeight
-      };
-    },
-    createBlock = function(top_position, height, color, isCall){
+    createBlock = function(top_position, height, color, showedCallback, overshotCallback){
       var blockWidth = 80,
           block = new fabric.Rect({
             left:        canvasWidth + 200,
@@ -126,7 +103,7 @@ var isSp = function(){
           });
       block.isShow = false;
       block.isPassed = false;
-      block.on('added', function(){
+      block.on('added', function(fn){
         var that = this;
         that.animate('left', -blockWidth, {
           duration: 6000,
@@ -134,11 +111,11 @@ var isSp = function(){
             that.setCoords();
             if (state === 'play' && !that.isShow && that.left <= canvasWidth - blockWidth) {
               that.isShow = true;
-              if (isCall) createBlockPair();
+              if (typeof showedCallback === 'function') showedCallback();
             }
             if (!block.isPassed && (that.left + that.width) <= ball.left) {
               block.isPassed = true;
-              if (isCall) passCount++;
+              if (typeof overshotCallback === 'function') overshotCallback();
             }
             if (that.intersectsWithObject(ball)) {
               state = 'playEnd';
@@ -152,13 +129,23 @@ var isSp = function(){
       return block;
     },
     createBlockPair = function(){
-      var o = calcBlockPosition(),
+      var blockSplitCount    = 10,
+          spaceBoxCount      = 3,
+          boxHeight          = Math.floor(canvasHeight / blockSplitCount),
+          floorBlockBoxCount = Math.floor(Math.random() * (blockSplitCount - spaceBoxCount - 1) + 1),
+          floorBlockTop      = (blockSplitCount - floorBlockBoxCount) * boxHeight,
+          floorBlockHeight   = boxHeight * floorBlockBoxCount,
+          roofBlockBoxCount  = blockSplitCount - spaceBoxCount - floorBlockBoxCount,
+          roofBlockTop       = -10000,
+          roofBlockHeight    = 10000 + boxHeight * roofBlockBoxCount;
           blockColor = (function(){
             var n = Math.floor(Math.random() * blockColors.length);
             return blockColors[n];
-          }());
-          roofBlock  = createBlock(o.roofBlockTop, o.roofBlockHeight, blockColor, true),
-          floorBlock = createBlock(o.floorBlockTop, o.floorBlockHeight, blockColor, false);
+          }()),
+          showedCallback   = function(){ createBlockPair(); },
+          overshotCallback = function() { passCount++; };
+          roofBlock  = createBlock(roofBlockTop, roofBlockHeight, blockColor, showedCallback, overshotCallback),
+          floorBlock = createBlock(floorBlockTop, floorBlockHeight, blockColor);
       blocks.push(roofBlock);
       blocks.push(floorBlock);
       canvas.add(roofBlock);
@@ -173,9 +160,7 @@ var isSp = function(){
         canvas.renderAll();
         ball.bringToFront();
         ball.animate('top', floor, {
-          onChange: function(){
-            canvas.renderAll();
-          },
+          onChange: function(){ canvas.renderAll(); },
           onComplete: function(){
             canvas.setBackgroundColor(canvasColor, canvas.renderAll.bind(canvas));
             alert('GAME OVER!!!');
@@ -203,7 +188,7 @@ canvas.setWidth(canvasWidth);
 canvas.setHeight(canvasHeight);
 canvas.setBackgroundColor(canvasColor, canvas.renderAll.bind(canvas));
 canvas.on('mouse:down', function(options) {
-  if (isSp() && options.e.type !== "touchstart") return;
+  if (isSmartphone() && options.e.type !== "touchstart") return;
   if (state === 'readyEnd') {
     gameStart();
     createBlockPair();
@@ -213,13 +198,9 @@ canvas.on('mouse:down', function(options) {
 });
 
 setInterval(function(){
-  if (state === 'gameoverEnd') {
-    gameReady();
-  } else if (state === 'play') {
-    ball.fall();
-  } else if (state === 'playEnd') {
-    gameOver();
-  }
+  if (state === 'gameoverEnd')  gameReady();
+  else if (state === 'play')    ball.fall();
+  else if (state === 'playEnd') gameOver();
   document.getElementById('count').firstChild.nodeValue = passCount;
 }, 10);
 

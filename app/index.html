@@ -231,6 +231,7 @@ var util = {
           if (state === 'readyEnd') {
             game.start();
             game.addBarricade();
+            ball.flap();
           } else if (state === 'play') {
             ball.flap();
           }

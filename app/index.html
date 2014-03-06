@@ -18,6 +18,16 @@
   <canvas id="c"></canvas>
 </div>
 <script>
+window.requestAnimationFrame = (function(){
+  return window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    function(callback, element){
+      window.setTimeout(callback, 1000 / 60);
+    };
+}());
 var util = {
       isSmartphone: function(){
         return navigator.userAgent.indexOf('iPhone') > 0 ||
@@ -25,7 +35,7 @@ var util = {
                navigator.userAgent.indexOf('iPod') > 0 ||
                navigator.userAgent.indexOf('Android') > 0;
       },
-      linear: function(t, b, c, d) { return c*t/d + b; },
+      linear: function(t, b, c, d) { return c*t/d + b; }
     },
     consts = {
       canvasElementId : "c",
@@ -226,6 +236,13 @@ var util = {
         canvas.add(ball);
       },
       initialize: function(){
+        var animationLoop = function() {
+          if (state === 'gameoverEnd')  game.ready();
+          else if (state === 'play')    ball.fall();
+          else if (state === 'playEnd') game.gameover();
+          passCountText.setText(''+passCount);
+          requestAnimationFrame(animationLoop);
+        };
         canvas.on('mouse:down', function(options) {
           if (util.isSmartphone() && options.e.type !== "touchstart") return;
           if (state === 'readyEnd') {
@@ -236,13 +253,8 @@ var util = {
             ball.flap();
           }
         });
-        setInterval(function(){
-          if (state === 'gameoverEnd')  game.ready();
-          else if (state === 'play')    ball.fall();
-          else if (state === 'playEnd') game.gameover();
-          passCountText.setText(''+passCount);
-        }, 10);
         game.ready();
+        animationLoop();
       }
     }
     ;

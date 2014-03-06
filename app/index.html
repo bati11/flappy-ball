@@ -9,15 +9,10 @@
 #c {
    border: 1px solid black;
 }
-#count {
-  font-weight: bold;
-  margin-left: 2em;
-}
 </style>
 </head>
 <body>
 <h1>Flappy Ball</h1>
-<p id="count">0</p>
 <div>
   <canvas id="c"></canvas>
 </div>
@@ -37,6 +32,10 @@ var util = {
       canvasWidth     : 600,
       canvasColor     : '#88c6e4',
       gameoverColor   : '#000',
+      textFontFamily  : 'Broadway BT',
+      textFill        : '#fff',
+      textStroke      : '#44404d',
+      textStrokeWidth : 2,
       ballRx          : 13,
       ballRy          : 10,
       ballLeft        : 100,
@@ -57,10 +56,23 @@ var util = {
       c.setBackgroundColor(consts.canvasColor, c.renderAll.bind(c));
       return c;
     }());
+    passCountText = null,
     ball = null,
     blocks = [],
     factory = (function(){
-      var createBall = function(){
+      var createPassCountText = function(){
+            return new fabric.Text('0', {
+              left: canvas.getWidth() / 2 - 30,
+              fontSize: 30,
+              fontFamily: consts.textFontFamily,
+              fontWeight: 'bold',
+              fill: consts.textFill,
+              stroke: consts.textStroke,
+              strokeWidth: consts.textStrokeWidth,
+              textAlign: 'center'
+            });
+          },
+          createBall = function(){
             var result = new fabric.Ellipse({
                   top: consts.ballTop,
                   left: consts.ballLeft,
@@ -147,6 +159,7 @@ var util = {
             return result;
           };
       return {
+        createPassCountText: createPassCountText,
         createBall: createBall,
         createBlock: createBlock
       }
@@ -174,6 +187,8 @@ var util = {
         blocks.push(floorBlock);
         canvas.add(roofBlock);
         canvas.add(floorBlock);
+        roofBlock.sendToBack();
+        floorBlock.sendToBack();
       },
       start: function(){
         state = 'play';
@@ -204,7 +219,9 @@ var util = {
         }
         passCount = 0;
         state = 'readyEnd';
+        passCountText = factory.createPassCountText();
         ball = factory.createBall();
+        canvas.add(passCountText);
         canvas.add(ball);
       },
       initialize: function(){
@@ -221,7 +238,7 @@ var util = {
           if (state === 'gameoverEnd')  game.ready();
           else if (state === 'play')    ball.fall();
           else if (state === 'playEnd') game.gameover();
-          document.getElementById('count').firstChild.nodeValue = passCount;
+          passCountText.setText(''+passCount);
         }, 10);
         game.ready();
       }

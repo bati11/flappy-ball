@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=620px,user-scalable=no">
-<title></title>
+<title>Fabric Ball</title>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script>
 <style>
 #c {
@@ -18,6 +18,7 @@
   <canvas id="c"></canvas>
 </div>
 <script>
+(function(){
 window.requestAnimationFrame = (function(){
   return window.requestAnimationFrame ||
     window.webkitRequestAnimationFrame ||
@@ -28,16 +29,7 @@ window.requestAnimationFrame = (function(){
       window.setTimeout(callback, 1000 / 60);
     };
 }());
-var util = {
-      isSmartphone: function(){
-        return navigator.userAgent.indexOf('iPhone') > 0 ||
-               navigator.userAgent.indexOf('iPad') > 0 ||
-               navigator.userAgent.indexOf('iPod') > 0 ||
-               navigator.userAgent.indexOf('Android') > 0;
-      },
-      linear: function(t, b, c, d) { return c*t/d + b; }
-    },
-    consts = {
+var config = {
       canvasElementId : "c",
       canvasHeight    : 300,
       canvasWidth     : 600,
@@ -59,38 +51,28 @@ var util = {
       blockDuration   : 6000
     },
     state = null,
-    passCount = 0,
-    canvas = (function(){
-      var c = new fabric.Canvas(consts.canvasElementId);
-      c.setWidth(consts.canvasWidth);
-      c.setHeight(consts.canvasHeight);
-      c.setBackgroundColor(consts.canvasColor, c.renderAll.bind(c));
-      return c;
-    }());
-    passCountText = null,
-    ball = null,
-    blocks = [],
     factory = (function(){
-      var createPassCountText = function(){
+      var linear = function(t, b, c, d) { return c*t/d + b; },
+          createPassCountText = function(canvas){
             return new fabric.Text('0', {
               left: canvas.getWidth() / 2 - 30,
               fontSize: 30,
-              fontFamily: consts.textFontFamily,
+              fontFamily: config.textFontFamily,
               fontWeight: 'bold',
-              fill: consts.textFill,
-              stroke: consts.textStroke,
-              strokeWidth: consts.textStrokeWidth,
+              fill: config.textFill,
+              stroke: config.textStroke,
+              strokeWidth: config.textStrokeWidth,
               textAlign: 'center'
             });
           },
-          createBall = function(){
+          createBall = function(canvas){
             var result = new fabric.Ellipse({
-                  top: consts.ballTop,
-                  left: consts.ballLeft,
-                  fill: consts.ballColor,
+                  top: config.ballTop,
+                  left: config.ballLeft,
+                  fill: config.ballColor,
                   strokeWidth: 0,
-                  rx: consts.ballRx,
-                  ry: consts.ballRy
+                  rx: config.ballRx,
+                  ry: config.ballRy
                 });
             result.flapFlag = false;
             result.fallFlag = false;
@@ -99,7 +81,7 @@ var util = {
               var that = this;
               that.fallFlag = true;
               that.animate('top', canvas.getHeight(), {
-                duration: consts.ballFallDuration,
+                duration: config.ballFallDuration,
                 onChange: function(){
                   that.setCoords();
                   ballBottom = that.get('top') + that.get('ry');
@@ -122,21 +104,21 @@ var util = {
               that.flapFlag = true;
               that.set('angle', 0);
               that.animate('top', '-=' + flapValue, {
-                duration: consts.ballFlapDuration,
+                duration: config.ballFlapDuration,
                 onChange: function(){
                   that.setCoords();
                   canvas.renderAll();
                 },
                 onComplete: function(){ that.flapFlag = false; },
-                easing: util.linear
+                easing: linear
               });
             };
             return result;
           },
-          createBlock = function(top_position, height, color, showedCallback, overshotCallback){
-            var blockWidth = consts.blockWidth,
+          createBlock = function(top_position, width, height, color, callback){
+            var blockWidth = config.blockWidth,
                 result = new fabric.Rect({
-                  left:        canvas.getWidth() + 200,
+                  left:        width + 200,
                   top:         top_position,
                   fill:        color,
                   strokeWidth: 0,
@@ -149,21 +131,13 @@ var util = {
             result.on('added', function(fn){
               var that = this;
               that.animate('left', -blockWidth, {
-                duration: consts.blockDuration,
+                duration: config.blockDuration,
                 onChange: function(){
                   that.setCoords();
-                  if (state === 'play' && !that.isShow && that.left <= canvas.getWidth() - blockWidth) {
-                    that.isShow = true;
-                    if (typeof showedCallback === 'function') showedCallback();
-                  }
-                  if (!that.isPassed && (that.left + that.width) <= ball.left) {
-                    that.isPassed = true;
-                    if (typeof overshotCallback === 'function') overshotCallback();
-                  }
-                  if (that.intersectsWithObject(ball)) state = 'playEnd';
+                  if (typeof callback === 'function') callback(that);
                 },
                 onComplete: function(){ if (that.left + that.width < 0) that.remove(); },
-                easing: util.linear,
+                easing: linear,
                 abort: function(){ return state !== 'play'; }
               });
             });
@@ -175,90 +149,124 @@ var util = {
         createBlock: createBlock
       }
     }()),
-    game = {
-      addBarricade: function(){
-        var blockSplitCount    = 10,
-            spaceBoxCount      = 3,
-            boxHeight          = Math.floor(canvas.getHeight() / blockSplitCount),
-            floorBlockBoxCount = Math.floor(Math.random() * (blockSplitCount - spaceBoxCount - 1) + 1),
-            floorBlockTop      = (blockSplitCount - floorBlockBoxCount) * boxHeight,
-            floorBlockHeight   = boxHeight * floorBlockBoxCount,
-            roofBlockBoxCount  = blockSplitCount - spaceBoxCount - floorBlockBoxCount,
-            roofBlockTop       = -10000,
-            roofBlockHeight    = 10000 + boxHeight * roofBlockBoxCount;
-            blockColor = (function(){
-              var n = Math.floor(Math.random() * consts.blockColors.length);
-              return consts.blockColors[n];
-            }()),
-            showedCallback   = function(){ game.addBarricade(); },
-            overshotCallback = function() { passCount++; };
-            roofBlock  = factory.createBlock(roofBlockTop, roofBlockHeight, blockColor, showedCallback, overshotCallback),
-            floorBlock = factory.createBlock(floorBlockTop, floorBlockHeight, blockColor);
-        blocks.push(roofBlock);
-        blocks.push(floorBlock);
-        canvas.add(roofBlock);
-        canvas.add(floorBlock);
-        roofBlock.sendToBack();
-        floorBlock.sendToBack();
-      },
-      start: function(){
-        state = 'play';
-      },
-      gameover: function(){
-        var canvasOrigColor = canvas.backgroundColor;
-        state = 'gameover';
-        canvas.setBackgroundColor(consts.gameoverColor, function(){
-          canvas.renderAll();
-          ball.bringToFront();
-          ball.animate('top', canvas.getHeight(), {
-            onChange: function(){ canvas.renderAll(); },
-            onComplete: function(){
-              canvas.setBackgroundColor(canvasOrigColor, canvas.renderAll.bind(canvas));
-              alert('GAME OVER!!!');
-              state = 'gameoverEnd'
+    game = (function(){
+      var canvas,
+          passCount = 0,
+          passCountText,
+          ball,
+          blocks = [],
+          isSmartphone = function(){
+            return navigator.userAgent.indexOf('iPhone') > 0 ||
+                   navigator.userAgent.indexOf('iPad') > 0 ||
+                   navigator.userAgent.indexOf('iPod') > 0 ||
+                   navigator.userAgent.indexOf('Android') > 0;
+          };
+      return {
+        addBarricade: function(){
+          var blockSplitCount    = 10,
+              spaceBoxCount      = 3,
+              boxHeight          = Math.floor(canvas.getHeight() / blockSplitCount),
+              floorBlockBoxCount = Math.floor(Math.random() * (blockSplitCount - spaceBoxCount - 1) + 1),
+              floorBlockTop      = (blockSplitCount - floorBlockBoxCount) * boxHeight,
+              floorBlockHeight   = boxHeight * floorBlockBoxCount,
+              roofBlockBoxCount  = blockSplitCount - spaceBoxCount - floorBlockBoxCount,
+              roofBlockTop       = -10000,
+              roofBlockHeight    = 10000 + boxHeight * roofBlockBoxCount;
+              blockColor = (function(){
+                var n = Math.floor(Math.random() * config.blockColors.length);
+                return config.blockColors[n];
+              }()),
+              ifPlayEnd = function(block){
+                if (block.intersectsWithObject(ball)) state = 'playEnd';
+              },
+              callback = function(block){
+                if (state === 'play' && !block.isShow && block.left <= canvas.getWidth() - block.getWidth()) {
+                  block.isShow = true;
+                  game.addBarricade();
+                }
+                if (!block.isPassed && (block.left + block.width) <= ball.left) {
+                  block.isPassed = true;
+                  passCount++;
+                }
+                ifPlayEnd(block);
+              },
+              roofBlock  = factory.createBlock(roofBlockTop, canvas.getWidth(), roofBlockHeight, blockColor, callback),
+              floorBlock = factory.createBlock(floorBlockTop, canvas.getWidth(), floorBlockHeight, blockColor, ifPlayEnd);
+          blocks.push(roofBlock);
+          blocks.push(floorBlock);
+          canvas.add(roofBlock);
+          canvas.add(floorBlock);
+          roofBlock.sendToBack();
+          floorBlock.sendToBack();
+        },
+        start: function(){
+          state = 'play';
+        },
+        gameover: function(){
+          var canvasOrigColor = canvas.backgroundColor;
+          state = 'gameover';
+          canvas.setBackgroundColor(config.gameoverColor, function(){
+            canvas.renderAll();
+            ball.bringToFront();
+            ball.animate('top', canvas.getHeight(), {
+              onChange: function(){ canvas.renderAll(); },
+              onComplete: function(){
+                canvas.setBackgroundColor(canvasOrigColor, canvas.renderAll.bind(canvas));
+                alert('GAME OVER!!!');
+                state = 'gameoverEnd'
+              }
+            });
+          });
+          ball.animate('angle', 80, {onChange: canvas.renderAll.bind(canvas)});
+        },
+        ready: function(){
+          state = 'ready';
+          canvas.clear();
+          if (ball) ball.remove();
+          for (var i=0,l=blocks.length; i<l; i++) {
+            blocks[i].remove();
+          }
+          passCount = 0;
+          state = 'readyEnd';
+          passCountText = factory.createPassCountText(canvas);
+          ball = factory.createBall(canvas);
+          canvas.add(passCountText);
+          canvas.add(ball);
+        },
+        initialize: function(c){
+          var animationLoop = function() {
+            if (state === 'gameoverEnd')  game.ready();
+            else if (state === 'play')    ball.fall();
+            else if (state === 'playEnd') game.gameover();
+            passCountText.setText(''+passCount);
+            requestAnimationFrame(animationLoop);
+          };
+          canvas = c;
+          canvas.on('mouse:down', function(options) {
+            if (isSmartphone() && options.e.type !== "touchstart") return;
+            if (state === 'readyEnd') {
+              game.start();
+              game.addBarricade(canvas);
+              ball.flap();
+            } else if (state === 'play') {
+              ball.flap();
             }
           });
-        });
-        ball.animate('angle', 80, {onChange: canvas.renderAll.bind(canvas)});
-      },
-      ready: function(){
-        state = 'ready';
-        canvas.clear();
-        if (ball) ball.remove();
-        for (var i=0,l=blocks.length; i<l; i++) {
-          blocks[i].remove();
+          game.ready();
+          animationLoop();
         }
-        passCount = 0;
-        state = 'readyEnd';
-        passCountText = factory.createPassCountText();
-        ball = factory.createBall();
-        canvas.add(passCountText);
-        canvas.add(ball);
-      },
-      initialize: function(){
-        var animationLoop = function() {
-          if (state === 'gameoverEnd')  game.ready();
-          else if (state === 'play')    ball.fall();
-          else if (state === 'playEnd') game.gameover();
-          passCountText.setText(''+passCount);
-          requestAnimationFrame(animationLoop);
-        };
-        canvas.on('mouse:down', function(options) {
-          if (util.isSmartphone() && options.e.type !== "touchstart") return;
-          if (state === 'readyEnd') {
-            game.start();
-            game.addBarricade();
-            ball.flap();
-          } else if (state === 'play') {
-            ball.flap();
-          }
-        });
-        game.ready();
-        animationLoop();
       }
-    }
+    }())
     ;
-game.initialize();
+(function(){
+  var c = new fabric.Canvas(config.canvasElementId);
+  c.setWidth(config.canvasWidth);
+  c.setHeight(config.canvasHeight);
+  c.setBackgroundColor(config.canvasColor, c.renderAll.bind(c));
+  game.initialize(c);
+}());
+
+}());
 </script>
 </body>
 </html>

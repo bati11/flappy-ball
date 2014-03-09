@@ -85,7 +85,6 @@ var config = {
                   that.setCoords();
                   ballBottom = that.get('top') + that.get('ry');
                   if (ballBottom >= canvas.getHeight()) state = 'playEnd';
-                  else                     canvas.renderAll();
                 },
                 onComplete: function(){ that.fallFlag = false; },
                 easing: fabric.util.easeInCirc,
@@ -106,7 +105,6 @@ var config = {
                 duration: config.ballFlapDuration,
                 onChange: function(){
                   that.setCoords();
-                  canvas.renderAll();
                 },
                 onComplete: function(){ that.flapFlag = false; },
                 easing: linear
@@ -205,18 +203,16 @@ var config = {
           var canvasOrigColor = canvas.backgroundColor;
           state = 'gameover';
           canvas.setBackgroundColor(config.gameoverColor, function(){
-            canvas.renderAll();
             ball.bringToFront();
             ball.animate('top', canvas.getHeight(), {
-              onChange: function(){ canvas.renderAll(); },
               onComplete: function(){
-                canvas.setBackgroundColor(canvasOrigColor, canvas.renderAll.bind(canvas));
+                canvas.setBackgroundColor(canvasOrigColor);
                 alert('GAME OVER!!!');
                 state = 'gameoverEnd'
               }
             });
           });
-          ball.animate('angle', 80, {onChange: canvas.renderAll.bind(canvas)});
+          ball.animate('angle', 80);
         },
         ready: function(){
           state = 'ready';
@@ -235,8 +231,13 @@ var config = {
         initialize: function(c){
           var animationLoop = function() {
             if (state === 'gameoverEnd')  game.ready();
-            else if (state === 'play')    ball.fall();
             else if (state === 'playEnd') game.gameover();
+            else if (state === 'play') {
+              ball.fall();
+              canvas.renderAll();
+            } else {
+              canvas.renderAll();
+            }
             passCountText.setText(''+passCount);
             requestAnimationFrame(animationLoop);
           };
